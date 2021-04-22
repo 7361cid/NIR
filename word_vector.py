@@ -1,3 +1,4 @@
+import re
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -16,7 +17,8 @@ def get_vectors(*strs):
 def show_info_about_compare_vectors(array):
     for i in range(len(array)):
         for j in range(len(array)):
-            print("Текст " + str(i+1) + " схож с текстом " + str(j+1) + " на " + str(array[i][j]) + " %")
+            procent_shodstva = re.findall("\d+", array[i][j])  # Иногда vectorizer помещает не число и его нужно вытащить регулярным выражением
+            print("Текст " + str(i+1) + " схож с текстом " + str(j+1) + " на " + str(procent_shodstva) + " %")
 
 
 if __name__ == "__main__":
