@@ -92,12 +92,13 @@ class TextDataBase:
 
 class Finder:
     def __init__(self, text_key: TextKey, text_data_base: TextDataBase):
-        self.text_key = text_key # ключевая инормация
+        self.text_key = text_key  # ключевая инормация
         self.text_data_base = text_data_base  # база документов
         self.statistic_list = self.make_TF_IDF_statistic() # статистика в виде списка, где каждый элемент это словарь
                                                            # ключевые словая в словаре это слова ключи, а значения
                                                            # это TF_IDF
     def TF_IDF(self, word, doc):
+        print("TF/IDF = " + str(self.TF(word, doc)) + "/" + str(self.IDF(word)) + " Для слова " + str(word) + " " + str(doc))
         return self.TF(word, doc) * self.IDF(word)
 
     def TF(self, word, doc):
@@ -109,10 +110,11 @@ class Finder:
 
     def IDF(self, word):
         docs_with_word = self.number_docs_with_word(word)
-        if docs_with_word:
-            return math.log10(self.text_data_base.doc_number / docs_with_word)
+        print("doc_number " + str(self.text_data_base.doc_number) + "-" + str(docs_with_word))
+        if docs_with_word != 0:
+            return math.log10(self.text_data_base.doc_number / docs_with_word)  # Причина ошибки, если слово есть во всех текстах, то считается логарифм от log 1 = 0
         else:
-            return 0  # Если слова нет?
+            return 0  # Если слова нет ни в одном тексте?
 
     def number_docs_with_word(self, word):  # рассчет количества документов в которых есть слово, переданное функции
         docs_count = 0
@@ -158,5 +160,5 @@ def search(key_info,  texts_list):
 
 if __name__ == "__main__":
     key_info = "после вечера у Ростовых Графиня была"
-    texts_list = ["test_text.txt", "test_text2.txt", "test_text3.txt"]
+    texts_list = ["после вечера", "у Ростовых ", "Графиня была"]
     search(key_info=key_info, texts_list=texts_list)
