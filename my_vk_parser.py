@@ -27,7 +27,7 @@ def user_chouse_emulator(text_list):  # Имитация выбора польз
 
 
 if __name__ == "__main__":
-    key_info = "движение вперёд"
+    key_info = "каждый раунд"  # взял текст из одного поста, чтобы точно было совпадение
     texts_list = get_text_from_vk(query=key_info, count=5, domain='sports_books')    # поиск постов с ключевыми словами
 
     user_text = user_chouse_emulator(texts_list)  # выбор текста пользователем (один случайный текст)
@@ -38,14 +38,14 @@ if __name__ == "__main__":
     key_list = key_info.split()  # Разбиение по пробелам
     words_list = user_text.split()
     new_key_list = []
-    for key in key_list:  # поиск новых ключевых слов
+    for key in key_list:  # поиск новых ключевых слов  (Если новых ключевых слов слишком много?)
         new_key_list.extend(text_search.frequancy_analis(words_list=words_list, key_word=key, max_new_words=2))
     new_texts_list = get_text_from_vk(query=key_info, count=5, domain='sports_books')    # поиск постов с расширенным
                                                                                          # набором ключевых слов
 
     rezult = text_search.search(key_info=key_info, texts_list=new_texts_list)  # расчет TF-IDF
-    rezult.sort(key=lambda x: x["TF-IDF"])
+    rezult.sort(key=lambda x: x["TF-IDF"])  # Сортируем найденные тексты по TF-IDF
     print(rezult)
 
     word_vector.show_info_about_compare_vectors([user_text, " ".join(rezult[0]["text_words_list"])])
-    word_vector.show_info_about_compare_vectors([user_text, " ".join(rezult[0]["text_words_list"])])
+  
