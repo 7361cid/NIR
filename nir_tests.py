@@ -53,7 +53,7 @@ def basic_test(*, key_info, count, domain, sheet, cos_sim_excel_index, tfidf_exc
     print(cos_sim_list)
     # среднее косинусное расстояние для первого текста и остальных
     info = " domain" + str(domain) + " count " + str(count) + " keyinfo " + str(key_info) + " lemotize " + str(lemotize)
-    sheet['С' + str(cos_sim_excel_index)] = info
+    sheet['C' + str(cos_sim_excel_index)] = info
 
     for cos_sim in cos_sim_list:
         sheet['A' + str(cos_sim_excel_index)] = str(cos_sim)
@@ -69,6 +69,7 @@ if __name__ == "__main__":
     sheet = wb["test"]
     sheet['A1'] = "косинусное расстояние"
     sheet['B1'] = "tf-idf"
+    sheet['C1'] = "Параметры теста"
     # взял текст из одного поста, чтобы точно было совпадение
     basic_test(key_info="каждого раунда", count=10, domain='sports_books',
                sheet=sheet, cos_sim_excel_index=2, tfidf_excel_index=2)
