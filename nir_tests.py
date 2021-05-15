@@ -52,8 +52,9 @@ def basic_test(*, key_info, count, domain, sheet, cos_sim_excel_index, tfidf_exc
     print(rezult_tfidf_list[-5:])
     print(cos_sim_list)
     # среднее косинусное расстояние для первого текста и остальных
-    sheet['С' + str(cos_sim_excel_index)] = " domain" + str(domain) + " count " + str(count) \
-                                            + " keyinfo " + str(key_info) + " lemotize " + str(lemotize)
+    info = " domain" + str(domain) + " count " + str(count) + " keyinfo " + str(key_info) + " lemotize " + str(lemotize)
+    sheet['С' + str(cos_sim_excel_index)] = info
+
     for cos_sim in cos_sim_list:
         sheet['A' + str(cos_sim_excel_index)] = str(cos_sim)
         cos_sim_excel_index += 1
