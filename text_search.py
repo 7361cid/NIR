@@ -14,13 +14,15 @@ def frequancy_analis(words_list, key_word, max_new_words):  # Поиск нов�
     for word in words_list:  # подсчет частот слов
         frequancy_dict[word] += 1
 
-    if key_word in frequancy_dict.keys():
+    if key_word in words_list:
         key_word_frequancy = frequancy_dict[key_word]
     else:
         key_word_frequancy = 0
     for word in words_list:
-        if frequancy_dict[word] > 0.99 * key_word_frequancy and  frequancy_dict[word] < 1.01 * key_word_frequancy:
+        #print("key word freq " + str(key_word_frequancy) + " word freq " + str(frequancy_dict[word]))
+        if 0.8 * key_word_frequancy < frequancy_dict[word] < 1.1 * key_word_frequancy:
             new_key_words.append(word)
+
     new_key_words = list(set(new_key_words))
     if len(new_key_words) > max_new_words:
         return new_key_words[:max_new_words]   # Если найдено слишком много новых ключевых слов
@@ -98,7 +100,7 @@ class Finder:
                                                            # ключевые словая в словаре это слова ключи, а значения
                                                            # это TF_IDF
     def TF_IDF(self, word, doc):
-        print("TF/IDF = " + str(self.TF(word, doc)) + "/" + str(self.IDF(word)) + " Для слова " + str(word) + " " + str(doc))
+        #print("TF/IDF = " + str(self.TF(word, doc)) + "/" + str(self.IDF(word)) + " Для слова " + str(word) + " " + str(doc))
         return self.TF(word, doc) * self.IDF(word)
 
     def TF(self, word, doc):
@@ -110,7 +112,6 @@ class Finder:
 
     def IDF(self, word):
         docs_with_word = self.number_docs_with_word(word)
-        print("doc_number " + str(self.text_data_base.doc_number) + "-" + str(docs_with_word))
         if docs_with_word != 0:
             return math.log10(self.text_data_base.doc_number / docs_with_word)  # Причина ошибки, если слово есть во всех текстах, то считается логарифм от log 1 = 0
         else:
@@ -143,8 +144,8 @@ class Finder:
 
         for doc_index in range(self.text_data_base.doc_number):
             rezult_dict = {}
-            print("В документе " + str(doc_index)
-                  + " TF_IDF="+str(sum_TF_IDF_for_docs[doc_index]))
+           # print("В документе " + str(doc_index)
+          #        + " TF_IDF="+str(sum_TF_IDF_for_docs[doc_index]))
             rezult_dict["id"] = doc_index                           # 3аполняем словарь с результатами
             rezult_dict["TF-IDF"] = sum_TF_IDF_for_docs[doc_index]
             rezult_dict["text_words_list"] = self.text_data_base.doc_list[doc_index]
@@ -162,3 +163,4 @@ if __name__ == "__main__":
     key_info = "после вечера у Ростовых Графиня была"
     texts_list = ["после вечера", "у Ростовых ", "Графиня была"]
     search(key_info=key_info, texts_list=texts_list)
+
