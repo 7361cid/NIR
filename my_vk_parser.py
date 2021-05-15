@@ -1,27 +1,38 @@
-import random
 import requests
 import text_search
 import word_vector
+import lemotizer
 
-
-def get_text_from_vk(*, query, domain, count):
-    token_auth = '61249f3161249f3161249f31aa615382936612461249f310145a604685c59e9ecda0d4b'   # тут нужен токен авторизаци
+def get_text_from_vk(*, query, domain, count, lemotize=False):
+    """
+    Теперь поиск работает по отдельным термам (по словам или N-граммам)
+    """
+    key_words_list = query.split()  # Разбиение по пробелам
+    texts_from_vk = []
+    token_auth = '61249f3161249f3161249f31aa615382936612461249f310145a604685c59e9ecda0d4b'   # токен авторизаци
     version = '5.130'
-    response = requests.get('https://api.vk.com/method/wall.search',
-                            params={
-                                "access_token": token_auth,
-                                "v": version,
-                                "count": count,
-                                "domain": domain,
-                                "query": query,  # Может лучше искать отдельно по словам?
-                            }
-                            )
-    data = response.json()["response"]["items"]
-    texts_from_vk = [d["text"] for d in data]
+    for key_word in key_words_list:  # поиск по отдельным термам
+        if lemotize:
+            key_word = lemotizer.lemmotize(key_word)
+        response = requests.get('https://api.vk.com/method/wall.search',
+                                params={
+                                    "access_token": token_auth,
+                                    "v": version,
+                                    "count": count,
+                                    "domain": domain,
+                                    "query": key_word,
+                                }
+                                )
+        data = response.json()["response"]["items"]
+        texts_with_key_word = [d["text"] for d in data]  # тексты с отдельным термом
+        texts_from_vk.extend(texts_with_key_word)   # добавление текстов с отдельным термом  к общему списку текстов
     return texts_from_vk
 
-def user_chouse_emulator(text_list):  # Имитация выбора пользователя
-    return random.choice(text_list)
+def user_chouse_emulator(*, texts_list, random):  # Имитация выбора пользователя
+    if random:
+        return random.choice(texts_list)
+    else:
+        return texts_list[0]
 
 
 
@@ -45,7 +56,9 @@ if __name__ == "__main__":
 
     rezult = text_search.search(key_info=key_info, texts_list=new_texts_list)  # расчет TF-IDF
     rezult.sort(key=lambda x: x["TF-IDF"])  # Сортируем найденные тексты по TF-IDF
+    rezult = [" ".join(r["text_words_list"]) for r in rezult]
     print(rezult)
-
-    word_vector.show_info_about_compare_vectors([user_text, " ".join(rezult[0]["text_words_list"])])
+    texts_list = [user_text]
+    texts_list.extend(rezult)
+    word_vector.show_info_about_compare_vectors(texts_list=texts_list)  # сравнение всех текстов друг с другом
   
