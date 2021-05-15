@@ -14,12 +14,23 @@ def get_vectors(*strs):
     return vectorizer.transform(text).toarray()
 
 
-def show_info_about_compare_vectors(array):
-    for i in range(len(array)):
-        for j in range(len(array)):
-            procent_shodstva = float(".".join(re.findall(r"\d+", str(array[i][j]))))*100  # Иногда vectorizer помещает не число и его нужно вытащить регулярным выражением
-            print("Текст " + str(i+1) + " схож с текстом " + str(j+1) + " на " + str(procent_shodstva) + " %")
+def show_info_about_compare_vectors(*, texts_list):
+    """Первый текст должен быть эталлоном для вывода статистики"""
+    array = get_cosine_sim(*texts_list)
+
+    #for i in range(len(texts_list)):
+      #  print("text №" + str(i+1) + " " + texts_list[i])
+    rezult = []
+    for j in range(len(array)):
+        procent_shodstva = float(".".join(re.findall(r"\d+", str(array[0][j]))))   #
+        # Иногда vectorizer помещает не число и его нужно вытащить регулярным выражением
+        procent_shodstva = round(procent_shodstva * 100)
+        if j != 0:
+            print("Текст 1 схож с текстом " + str(j + 1) + " на " + str(procent_shodstva) + " %")
+            rezult.append(procent_shodstva)
+    return rezult  # возвращает список косинусных расстояний эталонного текста относительно найденных
+
 
 
 if __name__ == "__main__":
-    show_info_about_compare_vectors(get_cosine_sim("Мой текст 1", "Мой текст еще", "Просто "))
+    show_info_about_compare_vectors(texts_list=("Пример текста", "Еще больше текста", "Не похож на предыдущие"))
