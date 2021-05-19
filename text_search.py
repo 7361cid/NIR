@@ -133,15 +133,24 @@ class Finder:
             statistic.append(dict_for_TF_IDF_for_doc)
         return statistic
 
-    def search(self):  # поиск, рассчет для каждого докмента суммы TF-IDF
+    def search(self, tf_idf_avg):  # поиск, рассчет для каждого докмента суммы TF-IDF
+        """
+        tf_idf_avg - если True то tf-idf усредняется
+        """
         rezult = []
         sum_TF_IDF_for_docs = []
+        doc_index = 0  # Индекс для поиска документа (нужно чтобы найти длину текста для усреднения)
         for doc_statistic in self.statistic_list:
             sum_TF_IDF = 0
             for key_word in doc_statistic.keys():
                 sum_TF_IDF += doc_statistic[key_word]
-            sum_TF_IDF_for_docs.append(sum_TF_IDF)
-
+            
+            if tf_idf_avg:
+                sum_TF_IDF_for_docs.append(sum_TF_IDF/len(self.text_data_base.texts_list[doc_index]))
+            else:
+                sum_TF_IDF_for_docs.append(sum_TF_IDF)
+            doc_index += 1
+                
         for doc_index in range(self.text_data_base.doc_number):
             rezult_dict = {}
            # print("В документе " + str(doc_index)
@@ -152,15 +161,15 @@ class Finder:
             rezult.append(rezult_dict)
         return rezult
 
-def search(key_info,  texts_list):
+def search(key_info,  texts_list, tf_idf_avg):
     text_key = TextKey(key_info=key_info)
     text_data_base = TextDataBase(texts_list= texts_list)
     finder = Finder(text_key=text_key, text_data_base=text_data_base)
-    return finder.search()
+    return finder.search(tf_idf_avg=tf_idf_avg)
 
 
 if __name__ == "__main__":
     key_info = "после вечера у Ростовых Графиня была"
     texts_list = ["после вечера", "у Ростовых ", "Графиня была"]
     search(key_info=key_info, texts_list=texts_list)
-
+    
