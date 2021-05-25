@@ -40,7 +40,7 @@ def lemmotize(word):
     return morph.normal_forms(word)[0]
 
 
-def N_gramma(word_list, token_length):
+def N_gramma(*, word_list, token_length):
     new_word_list = []
     for i in range(len(word_list) - token_length + 1):
         token = ""
@@ -83,8 +83,7 @@ class TextDataBase:
     def fill_data_base(self):
         data = []
         for text in self.texts_list:
-            for bad_symbol in [',', '.', '!', '?']: # выкинуть пунктуацию
-                text = text.replace(bad_symbol, '')
+            delete_bad_symbols(text)
             doc_words_list_before_lemmatize = text.split()
             doc_words_list = [lemmotize(word.lower()) for word in doc_words_list_before_lemmatize]
             data.append(delete_stopwords(doc_words_list))
@@ -144,13 +143,15 @@ class Finder:
             sum_TF_IDF = 0
             for key_word in doc_statistic.keys():
                 sum_TF_IDF += doc_statistic[key_word]
-            
-            if tf_idf_avg:
-                sum_TF_IDF_for_docs.append(sum_TF_IDF/len(self.text_data_base.texts_list[doc_index]))
+           # print("text_data_base.texts_list " +  str(self.text_data_base.texts_list))
+           # print("text_data_base.doc_list" + str(self.text_data_base.doc_list))
+            if tf_idf_avg and len(self.text_data_base.doc_list[doc_index]) != 0:
+               # print("index " + str(doc_index) + " len= " + str(len(self.text_data_base.doc_list[doc_index])))
+                sum_TF_IDF_for_docs.append(sum_TF_IDF/len(doc_statistic.keys()))
             else:
                 sum_TF_IDF_for_docs.append(sum_TF_IDF)
             doc_index += 1
-                
+
         for doc_index in range(self.text_data_base.doc_number):
             rezult_dict = {}
            # print("В документе " + str(doc_index)
@@ -161,15 +162,22 @@ class Finder:
             rezult.append(rezult_dict)
         return rezult
 
+
 def search(key_info,  texts_list, tf_idf_avg):
     text_key = TextKey(key_info=key_info)
-    text_data_base = TextDataBase(texts_list= texts_list)
+    text_data_base = TextDataBase(texts_list=texts_list)
     finder = Finder(text_key=text_key, text_data_base=text_data_base)
     return finder.search(tf_idf_avg=tf_idf_avg)
+
+
+def delete_bad_symbols(text):
+    for bad_symbol in [',', '.', '!', '?', '(', ')']:
+        text = text.replace(bad_symbol, ' ')
 
 
 if __name__ == "__main__":
     key_info = "после вечера у Ростовых Графиня была"
     texts_list = ["после вечера", "у Ростовых ", "Графиня была"]
     search(key_info=key_info, texts_list=texts_list)
+
     
