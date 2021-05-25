@@ -3,7 +3,8 @@ import text_search
 import word_vector
 import lemotizer
 
-def get_text_from_vk(*, query, domain, count, lemotize=False):
+
+def get_text_from_vk(*, query, domain, count, lemotize=False, Ngram=0):
     """
     Теперь поиск работает по отдельным термам (по словам или N-граммам)
     """
@@ -11,6 +12,8 @@ def get_text_from_vk(*, query, domain, count, lemotize=False):
     texts_from_vk = []
     token_auth = '61249f3161249f3161249f31aa615382936612461249f310145a604685c59e9ecda0d4b'   # токен авторизаци
     version = '5.130'
+    if Ngram:
+        text_search.N_gramma(word_list=key_words_list, token_length=Ngram)
     for key_word in key_words_list:  # поиск по отдельным термам
         if lemotize:
             key_word = lemotizer.lemmotize(key_word)
@@ -26,15 +29,19 @@ def get_text_from_vk(*, query, domain, count, lemotize=False):
         data = response.json()["response"]["items"]
         texts_with_key_word = [d["text"] for d in data]  # тексты с отдельным термом
         texts_from_vk.extend(texts_with_key_word)   # добавление текстов с отдельным термом  к общему списку текстов
+        for text in texts_from_vk:
+            text_search.delete_bad_symbols(text)
+
     return texts_from_vk
+
 
 def user_chouse_emulator(*, texts_list, random):  # Имитация выбора пользователя
     if random:
         return random.choice(texts_list)
     else:
-        return texts_list[0]
-
-
+        for text in texts_list:
+            if len(text) > 0:
+                return text
 
 
 if __name__ == "__main__":
@@ -61,4 +68,6 @@ if __name__ == "__main__":
     texts_list = [user_text]
     texts_list.extend(rezult)
     word_vector.show_info_about_compare_vectors(texts_list=texts_list)  # сравнение всех текстов друг с другом
+
+
   
