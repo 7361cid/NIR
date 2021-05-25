@@ -37,7 +37,7 @@ training_text = """
 и извлечения признаков из текста.  На основе анализа существующих решений был выбран алгоритм для реализации.
 В результате работы получен алгоритма поиска текстовой информации по ключевым словам в социальных сетях.  
 """.split("\n")[1:-1]
-print(len(training_text))
+
 def kmeans_predict(*, text1, text2):
     tfidf_vectorizer = TfidfVectorizer(preprocessor=my_preprocessing)
     tfidf = tfidf_vectorizer.fit_transform(training_text)
@@ -49,6 +49,25 @@ def kmeans_predict(*, text1, text2):
     else:
         return 0
 
+
+def compare_texts(*, tf_idf_list, tf_idf_etalon):
+    array = np.array([[tf_idf_etalon]])
+    index = 0
+    for tf_idf in tf_idf_list:
+        tmp = np.array([[tf_idf]])
+        array = np.concatenate((array, tmp))
+        index += 1
+    kmeans = KMeans(n_clusters=2, random_state=0).fit(array)
+    rezult = []
+    for elem in array[1:]:
+        predict = kmeans.predict([[tf_idf_etalon], elem])
+        if predict[0] == predict[1]:    # 1 - элементы в одном кластере
+            rezult.append(1)
+        else:
+            rezult.append(0)
+    print(" len(rezult) " + str(len(rezult)))
+    return rezult
+
+
 if __name__ == "__main__":
-    print(kmeans_predict(text1="В результате работы получен   ",
-                         text2="Объектом исследования являются алгоритм поиска"))
+    print(compare_texts(tf_idf_list=[1, 2, 3, 4, 5], tf_idf_etalon=2))
