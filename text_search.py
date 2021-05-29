@@ -2,6 +2,7 @@ import math
 import nltk
 from pymorphy2 import MorphAnalyzer
 from nltk.corpus import stopwords
+from readability import getmeasures
 
 nltk.download('stopwords')
 
@@ -51,9 +52,11 @@ def N_gramma(*, word_list, token_length):
 
 
 class TextKey:
-    def __init__(self, key_info):
+    def __init__(self, key_info, ENG=False):
         self.key_info = key_info  # Текст ключевой последовательности
-        self.key_words_list = self.get_key_words_list()  # Список слов
+        self.key_words_list = self.get_key_words_list(ENG)  # Список слов
+        print("self.key_info" + str(self.key_info))
+        print("self.key_words_list" + str(self.key_words_list))
 
     @staticmethod
     def is_word(word):   # проверка на то что слово состоит только из букв
@@ -62,14 +65,16 @@ class TextKey:
                 return False
         return True
 
-    def get_key_words_list(self):
-        for bad_symbol in [',', '.', '!', '?']:   # выкинуть из текста символы пунтуации, чтобы не было слов в стиле "Я,"
-            self.key_info.replace(bad_symbol, '')
-
+    def get_key_words_list(self, ENG):
+        delete_bad_symbols(self.key_info)
         words_list = self.key_info.split()  # Разбиение по пробелам
+        print("words_list " + str(words_list))
+        if ENG:        # Для английского нужна другая лемматизация
+            return words_list
         key_words_list_before_lemmatize = [word for word in words_list if self.is_word(word=word)]
         # проверка на то что слово только из букв
         key_words_list = [lemmotize(word.lower()) for word in key_words_list_before_lemmatize]
+        print("key_words_list_before_lemmatize " + str(key_words_list_before_lemmatize))
         return delete_stopwords(key_words_list)
 
 
@@ -128,8 +133,10 @@ class Finder:
         for doc_index in range(self.text_data_base.doc_number):
             dict_for_TF_IDF_for_doc = {}
             for word in self.text_key.key_words_list:
+                print("self.text_key.key_words_list " + str(self.text_key.key_words_list))
                 dict_for_TF_IDF_for_doc[word] = self.TF_IDF(word=word, doc=self.text_data_base.doc_list[doc_index])
             statistic.append(dict_for_TF_IDF_for_doc)
+            print("dict_for_TF_IDF_for_doc " + str(dict_for_TF_IDF_for_doc))
         return statistic
 
     def search(self, tf_idf_avg):  # поиск, рассчет для каждого докмента суммы TF-IDF
@@ -138,11 +145,17 @@ class Finder:
         """
         rezult = []
         sum_TF_IDF_for_docs = []
+        TF_IDF_vectors_for_docs = []
         doc_index = 0  # Индекс для поиска документа (нужно чтобы найти длину текста для усреднения)
         for doc_statistic in self.statistic_list:
             sum_TF_IDF = 0
+            TF_IDF_vector = []
+            print("doc_statistic.keys() " + str(doc_statistic.keys()))
             for key_word in doc_statistic.keys():
                 sum_TF_IDF += doc_statistic[key_word]
+                TF_IDF_vector.append(doc_statistic[key_word])
+            TF_IDF_vectors_for_docs.append(TF_IDF_vector)
+
            # print("text_data_base.texts_list " +  str(self.text_data_base.texts_list))
            # print("text_data_base.doc_list" + str(self.text_data_base.doc_list))
             if tf_idf_avg and len(self.text_data_base.doc_list[doc_index]) != 0:
@@ -150,21 +163,24 @@ class Finder:
                 sum_TF_IDF_for_docs.append(sum_TF_IDF/len(doc_statistic.keys()))
             else:
                 sum_TF_IDF_for_docs.append(sum_TF_IDF)
+
             doc_index += 1
 
         for doc_index in range(self.text_data_base.doc_number):
             rezult_dict = {}
            # print("В документе " + str(doc_index)
-          #        + " TF_IDF="+str(sum_TF_IDF_for_docs[doc_index]))
+           #        + " TF_IDF="+str(sum_TF_IDF_for_docs[doc_index]))
             rezult_dict["id"] = doc_index                           # 3аполняем словарь с результатами
             rezult_dict["TF-IDF"] = sum_TF_IDF_for_docs[doc_index]
             rezult_dict["text_words_list"] = self.text_data_base.doc_list[doc_index]
+            rezult_dict["TF-IDF_Vector"] = TF_IDF_vectors_for_docs[doc_index]
+            rezult_dict["ARI"] = ari(text=self.text_data_base.texts_list[doc_index])
             rezult.append(rezult_dict)
         return rezult
 
 
-def search(key_info,  texts_list, tf_idf_avg):
-    text_key = TextKey(key_info=key_info)
+def search(key_info,  texts_list, tf_idf_avg, ENG=False):
+    text_key = TextKey(key_info=key_info, ENG=ENG)
     text_data_base = TextDataBase(texts_list=texts_list)
     finder = Finder(text_key=text_key, text_data_base=text_data_base)
     return finder.search(tf_idf_avg=tf_idf_avg)
@@ -175,9 +191,15 @@ def delete_bad_symbols(text):
         text = text.replace(bad_symbol, ' ')
 
 
+def ari(*, text):
+    measures = getmeasures(text=text, lang="en")  # Для ari язык не важен
+    return measures['readability grades']['ARI']
+
+
 if __name__ == "__main__":
     key_info = "после вечера у Ростовых Графиня была"
     texts_list = ["после вечера", "у Ростовых ", "Графиня была"]
-    search(key_info=key_info, texts_list=texts_list)
+    search(key_info=key_info, texts_list=texts_list, tf_idf_avg=True)
+    ari(text=key_info)
 
     
