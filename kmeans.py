@@ -21,3 +21,7 @@ def compare_texts(*, tf_idf_list, tf_idf_etalon_vector):
             rezult.append(0)
     print(" len(rezult) " + str(len(rezult)))
     return rezult
+
+
+if __name__ == "__main__":
+    print(compare_texts(tf_idf_list=[[1, 2, 3], [2, 5, 2]], tf_idf_etalon_vector=[1, 1, 1]))
