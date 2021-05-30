@@ -168,12 +168,14 @@ def test_newsgroups(*, categories, count, book_name, sheet_name, excel_index, tf
     sheet['A1'] = "косинусное расстояние"
     sheet['B1'] = "tf-idf"
     sheet['C1'] = "kmeans"
-    sheet['D1'] = "ari"
-    sheet['E1'] = "косинусное расстояние ari"
-    sheet['F1'] = "Параметры теста"
+    sheet['D1'] = "категория"
+    sheet['E1'] = "ari"
+    sheet['F1'] = "косинусное расстояние ari"
+    sheet['G1'] = "категория"
+    sheet['G1'] = "Параметры теста"
 
     # поиск постов с по категориям
-    texts_list = get_text_from_newsgroups(categories=categories, count=count)
+    texts_list, categories_dict = get_text_from_newsgroups(categories=categories, count=count)
     # выбор текста пользователем(берем 1ый не пустой текст)
     user_text = vk.user_chouse_emulator(texts_list=texts_list, random=False)
     # в начале новостных текстов идет email поэтому лучше брать не первые слова
@@ -190,8 +192,12 @@ def test_newsgroups(*, categories, count, book_name, sheet_name, excel_index, tf
     ari_etalon = text_search.ari(text=user_text)
     rezult.sort(key=lambda x: x["TF-IDF"])  # Сортируем найденные тексты по TF-IDF
 
+    cat_etalon = find_catigories(texts=[user_text], cat_dict=categories_dict)
+
     top_five_tf_idf = find_top_5(rezult=rezult, tf_idf_etalon=tf_idf_etalon)
     top_five_tf_idf_texts_list = [" ".join(r["text_words_list"]) for r in top_five_tf_idf]
+    top_five_tf_idf_cats = find_catigories(texts=top_five_tf_idf_texts_list, cat_dict=categories_dict)
+    print("cats =" + str(top_five_tf_idf_cats))
     top_five_tf_idf_value = [r["TF-IDF"] for r in top_five_tf_idf]
     top_five_tf_idf_vectors_list = [r["TF-IDF_Vector"] for r in top_five_tf_idf]
     texts_list_from_top_five_tf_idf = [user_text]
@@ -207,6 +213,7 @@ def test_newsgroups(*, categories, count, book_name, sheet_name, excel_index, tf
     top_five_ari = find_top_5(rezult=rezult, ari_etalon=ari_etalon)
     top_five_ari_value = [r["ARI"] for r in top_five_ari]
     top_five_ari_texts_list = [" ".join(r["text_words_list"]) for r in top_five_ari]
+    top_five_ari_cats = find_catigories(texts=top_five_ari_texts_list, cat_dict=categories_dict)
     texts_list_from_top_five_ari = [user_text]
     texts_list_from_top_five_ari.extend(top_five_ari_texts_list)
     # рассчет косинусного расстояния для текстов отобранных по ari
@@ -214,11 +221,11 @@ def test_newsgroups(*, categories, count, book_name, sheet_name, excel_index, tf
         texts_list=texts_list_from_top_five_ari)  # рассчет косинусного расстояния
 
     cos_sim_excel_index = tfidf_excel_index = kmeans_excel_index = ari_excel_index = \
-        cos_sim_ari_excel_index = excel_index
+        cos_sim_ari_excel_index  = cats_tf_idf_excel_index = cats_ari_excel_index = excel_index
 
     info = " categories " + str(categories) + " count " + str(count) + " keytext " + str(key_text) + \
            " tf_idf_avg " + str(tf_idf_avg)
-    sheet['G' + str(excel_index)] = info
+    sheet['H' + str(excel_index)] = info
 
     for cos_sim in cos_sim_list:
         sheet['A' + str(cos_sim_excel_index)] = str(cos_sim)
@@ -232,20 +239,37 @@ def test_newsgroups(*, categories, count, book_name, sheet_name, excel_index, tf
         sheet['C' + str(kmeans_excel_index)] = str(kmeans_value).replace('.', ',')  # разделитель в excel это ,
         kmeans_excel_index += 1
 
+    for cat in top_five_tf_idf_cats:
+        sheet['D' + str(cats_tf_idf_excel_index)] = str(cat)
+        cats_tf_idf_excel_index += 1
+
+    sheet['D' + str(cats_tf_idf_excel_index)] = " Категория эталона " + str(cat_etalon)
+
     for ari in top_five_ari_value:
-        sheet['D' + str(ari_excel_index)] = str(ari).replace('.', ',')  # разделитель в excel это ,
+        sheet['E' + str(ari_excel_index)] = str(ari).replace('.', ',')  # разделитель в excel это ,
         ari_excel_index += 1
 
     for ari in cos_sim_list_ari:
-        sheet['E' + str(cos_sim_ari_excel_index)] = str(ari).replace('.', ',')  # разделитель в excel это ,
+        sheet['F' + str(cos_sim_ari_excel_index)] = str(ari).replace('.', ',')  # разделитель в excel это ,
         cos_sim_ari_excel_index += 1
+
+    for cat in top_five_ari_cats:
+        sheet['G' + str(cats_ari_excel_index)] = str(cat)
+        cats_ari_excel_index += 1
 
     wb.save(book_name)
 
 
 def get_text_from_newsgroups(*, categories, count):
-    newsgroups_train = fetch_20newsgroups(subset='train', categories=categories)
-    return newsgroups_train.data[:count]
+    texts = []
+    categories_dict = {}
+    for cat in categories:
+        newsgroups_train = fetch_20newsgroups(subset='train', categories=[cat])
+        cat_texts = newsgroups_train.data[:count]
+        for text in cat_texts:
+            texts.append(text)
+        categories_dict[cat] = cat_texts
+    return texts, categories_dict
 
 
 def find_top_5(rezult, tf_idf_etalon="", ari_etalon=""):
@@ -288,6 +312,24 @@ def unique_rezult(*, rezult):
     return rezult_unique
 
 
+def find_catigories(texts, cat_dict):
+    """
+    Для списка текстов возвращает список категорий
+    """
+    cats = []
+    for text in texts:
+        for cat in cat_dict.keys():
+            if check_text_similar_to_text_list(text=text, text_list=cat_dict[cat]):
+                cats.append(cat)
+                break
+    return cats
+
+
+def check_text_similar_to_text_list(*, text, text_list):
+    for t in text_list:
+        if word_list_compare(text.split(), t.split()) > 0.5:
+            return True
+
 if __name__ == "__main__":
 
     # взял тектст из одного поста, для проверки N-грамм лучше фраза подлинее, так как фраза длиннее уменьшим count
@@ -319,9 +361,7 @@ if __name__ == "__main__":
     """
     categories = ['sci.space',  'talk.politics.guns', 'comp.windows.x', 'rec.sport.hockey']
     test_newsgroups(categories=categories, count=10, book_name="NIR2021.xlsx",
-                    sheet_name="test9", excel_index=10, key_text_length=10, tf_idf_avg=False)
+                    sheet_name="test10", excel_index=10, key_text_length=10, tf_idf_avg=False)
 
     test_newsgroups(categories=categories, count=10, book_name="NIR2021.xlsx",
-                    sheet_name="test9", excel_index=20, key_text_length=10, tf_idf_avg=True)
-
-
+                    sheet_name="test10", excel_index=20, key_text_length=10, tf_idf_avg=True)
